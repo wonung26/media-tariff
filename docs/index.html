@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Offers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="container mx-auto max-w-lg bg-white shadow-md rounded-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Phone Offers</h1>
+
+        <div class="mb-4">
+            <label for="brand-select" class="block text-gray-700 text-sm font-bold mb-2">Select Brand:</label>
+            <select id="brand-select" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="" disabled selected>Select a brand</option>
+            </select>
+        </div>
+
+        <button id="fetch-offers" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            Find Offers
+        </button>
+
+        <div id="loading" class="mt-4 text-gray-600" style="display: none;">Loading offers...</div>
+        <div id="offers-container" class="mt-6">
+            <!-- Offers will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        const brandSelect = document.getElementById('brand-select');
+        const fetchOffersButton = document.getElementById('fetch-offers');
+        const loadingDiv = document.getElementById('loading');
+        const offersContainer = document.getElementById('offers-container');
+
+        // Fetch brands on page load
+        window.onload = async () => {
+            loadingDiv.style.display = 'block';
+            try {
+                const response = await fetch('https://media-tariff.onrender.com/api/brands');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const brands = await response.json();
+                brands.forEach(brand => {
+                    const option = document.createElement('option');
+                    option.value = brand;
+                    option.textContent = brand;
+                    brandSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching brands:', error);
+                offersContainer.innerHTML = `<div class="text-red-500">Failed to load brands.</div>`;
+            } finally {
+                loadingDiv.style.display = 'none'; 
+            }
+        };
+
+        fetchOffersButton.addEventListener('click', async () => {
+            const selectedBrand = brandSelect.value;
+            if (!selectedBrand) {
+                alert('Please select a brand.');
+                return;
+            }
+
+            loadingDiv.style.display = 'block';
+            offersContainer.innerHTML = ''; // Clear previous offerss
+            try {
+                const response = await fetch(`https://media-tariff.onrender.com/api/offers?brand=${selectedBrand}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const offers = await response.json();
+                if (offers && offers.length > 0) {
+                    offers.forEach(offer => {
+                        const offerDiv = document.createElement('div');
+                        offerDiv.className = 'bg-gray-50 rounded border p-4 mb-4';
+                        offerDiv.innerHTML = `
+                            <h3 class="font-semibold text-lg text-gray-800">${offer.deviceName}</h3>
+                            <p class="text-gray-700">Lowest Price: <span class="font-bold text-blue-600">€${offer.totalPrice}</span></p>
+                            <p class="text-gray-700 text-sm">Package: ${offer.lowestPricePackage}</p>
+                        `;
+                        offersContainer.appendChild(offerDiv);
+                    });
+                } else {
+                    offersContainer.innerHTML = `<div class="text-gray-600">No offers found for ${selectedBrand}.</div>`;
+                }
+            } catch (error) {
+                console.error('Error fetching offers:', error);
+                offersContainer.innerHTML = `<div class="text-red-500">Failed to load offers.</div>`;
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
