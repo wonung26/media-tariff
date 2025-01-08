@@ -1,8 +1,12 @@
 const express = require('express');
 const app = express();
+var cors = require('cors')
+
 const port = 3001;
 
 // const BASE_URL = 
+
+app.use(cors())
 
 app.use(express.json()); // Middleware to parse JSON request bodies
 
